@@ -17,11 +17,10 @@ using RequireJsNet;
 using RequireJsNet.Configuration;
 using RequireJsNet.Helpers;
 using RequireJsNet.Models;
-
+using System.Web;
 namespace RequireJS
 {
-    using System.Diagnostics;
-    using System.Web;
+
 
     public static class RequireJsHtmlHelpers
     {
@@ -284,6 +283,17 @@ namespace RequireJS
                 var computedEntry = GetEntryPoint(server, filePath, root);
                 return new MvcHtmlString(withBaseUrl ? computedEntry : rootUrl + computedEntry + ".js");
             }
+
+            //load for default
+            entryPointTmpl = "Controllers/{0}/" + routingInfo.Controller + "/__default";
+            entryPoint = string.Format(entryPointTmpl, routingInfo.Area).ToModuleName();
+            filePath = server.MapPath(root + entryPoint + ".js");
+
+            if (File.Exists(filePath))
+            {
+                var computedEntry = GetEntryPoint(server, filePath, root);
+                return new MvcHtmlString(withBaseUrl ? computedEntry : rootUrl + computedEntry + ".js");
+            } 
 
             return null;
         }
