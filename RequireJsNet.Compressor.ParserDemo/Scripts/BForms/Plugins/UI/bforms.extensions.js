@@ -159,7 +159,7 @@
         //#endregion
 
         //#region radio buttons
-        $(this).find(".bs-radio-list").each(function () {
+        $(this).find(".bs-radio-list" + ':not(' + ignore + ')').each(function () {
             if ($(this).data("initialvalue") != undefined) {
                 $(this).bsRadioButtonsListUpdateSelf($(this).data("initialvalue"));
             }
@@ -167,25 +167,25 @@
         //#endregion
 
         //#region datePicker
-        $(this).find('.hasDatepicker').each(function () {
+        $(this).find('.hasDatepicker' + ':not(' + ignore + ')').each(function () {
             $(this).bsDatepicker('resetValue');
         });
         //#endregion
 
         //#region rangePicker
-        $(this).find('.hasRangepicker').each(function () {
+        $(this).find('.hasRangepicker' + ':not(' + ignore + ')').each(function () {
             $(this).bsDateRange('resetValue');
         });
         //#endregion
         
         //#region number rangePicker
-        $(this).find('.hasNumberRangepicker').each(function() {
+        $(this).find('.hasNumberRangepicker' + ':not(' + ignore + ')').each(function () {
             $(this).bsRangePicker('resetValue');
         });
         //#endregion
         
         //#region radioButtonsList
-        var radioButtons = $(this).find('.radioButtonsList-done');
+        var radioButtons = $(this).find('.radioButtonsList-done' + ':not(' + ignore + ')');
 
         if (radioButtons.length > 0) {
             radioButtons.bsResetRadioButtons();
@@ -216,4 +216,158 @@
     };
     //#endregion
 
+    //#region $.fn.bsResetFormInOrder
+    // place data-resetorder to set the order in which the fields reset is done (in case you have some triggers that get messed up)
+    $.fn.bsResetFormInOrder = function (focus, ignore, triggerChange) {
+
+        $(this).find('input:not(' + ignore + '), textarea:not(' + ignore + '), select' + ':not(' + ignore + ') , .bs-radio-list:not(' + ignore + '), .radioButtonsList-done:not(' + ignore + ')')
+            .sort(function (el1, el2) {
+                var order1 = $(el1).data('resetorder'),
+                    order2 = $(el2).data('resetorder');
+
+                if (order1 && order2) {
+                    return order1 - order2;
+                } else if (order1) {
+                    return 1;
+                } else if (order2) {
+                    return -1
+                } else {
+                    return 0;
+                }
+            }).each(function () {
+                var thisObj = $(this);
+
+                if (thisObj.hasClass('bs-radio-list')) {
+
+                    thisObj.bsResetRadioButtons();
+
+                } else if (thisObj.is('select')) {
+
+                    if (thisObj.data('initialvalue')) {
+                        if (thisObj.data('select2') != null) {
+                            thisObj.select2('val', thisObj.data('initialvalue'));
+                        } else {
+                            thisObj.val(thisObj.data('initialvalue'));
+                        }
+                    }
+                    else {
+                        if (thisObj.data('select2') != null) {
+                            thisObj.select2('val', '');
+                        } else {
+                            thisObj.val('');
+                        }
+                    }
+
+                    thisObj.trigger('change');
+
+                } else if (thisObj.hasClass('hasDatepicker')) {
+
+                    thisObj.bsDatepicker('resetValue');
+
+                } else if (thisObj.hasClass('hasRangepicker')) {
+
+                    thisObj.bsDateRange('resetValue');
+
+                } else if (thisObj.hasClass('hasNumberRangepicker')) {
+
+                    thisObj.bsRangePicker('resetValue');
+
+                } else if (thisObj.hasClass('radioButtonsList-done')) {
+
+                    thisObj.bsResetRadioButtons();
+
+                } else {
+                    switch (this.type) {
+                        case 'password':
+                        case 'select-multiple':
+                        case 'select-one':
+                        case 'text':
+                        case 'url':
+                        case 'email':
+                        case 'textarea':
+                            if (thisObj.hasClass("tag_counter")) {
+                                thisObj.val('0');
+                            } else {
+                                thisObj.val('');
+                                if (triggerChange === true) {
+                                    thisObj.trigger('change');
+                                }
+                            }
+                            break;
+                        case 'checkbox':
+                            if (thisObj.hasClass("checkBox-done")) {
+                                thisObj.attr("checked", thisObj.data("initialvalue"));
+                                thisObj.trigger("change");
+                            } else {
+                                thisObj.attr('checked', false);
+                            }
+                            break;
+                        case 'radio':
+                            this.checked = false;
+                            break;
+                        case 'range':
+                            thisObj.val(0);
+                            break;
+                        case 'file':
+                            thisObj.val('');
+                            break;
+                        case 'hidden':
+                            if (typeof thisObj.data('select2') !== 'undefined') {
+                                thisObj.select2('val', '');
+                            }
+                    }
+                }
+
+            });
+
+        //#endregion
+
+        if (focus !== false)
+            $(this).find("input:first").focus();
+
+        var $form = $([]);
+
+        if (($(this)).is('form')) {
+            $form = $(this);
+        } else {
+            $form = $(this).find('form');
+        }
+
+        if ($form.length) {
+            $form.each(function () {
+                var validator = $(this).data('validator');
+                if (typeof validator !== "undefined" && typeof validator.resetForm === "function") {
+                    validator.resetForm();
+                }
+            });
+        }
+
+        return $(this);
+    };
+    //#endregion
+
+    //#region $.fn.bsDisableForm
+    $.fn.bsDisableForm = function (ignore) {
+        $(this).find('input:not(' + ignore + '), textarea:not(' + ignore + '), select' + ':not(' + ignore + ')').each(function () {
+            $(this).css({
+                'cursor': 'not-allowed !important',
+                'background-color': '#eeeeee !important',
+                'opacity': '1 !important'
+            });
+            $(this).attr('disabled', 'disabled');
+        });
+    };
+    //#endregion
+
+    //#region $.fn.bsEnableForm
+    $.fn.bsEnableForm = function (ignore) {
+        $(this).find('input:not(' + ignore + '), textarea:not(' + ignore + '), select' + ':not(' + ignore + ')').each(function () {
+            $(this).removeAttr('disabled');
+            $(this).css({
+                'cursor': 'auto',
+                'background-color': 'transparent'
+            });
+        });
+    };
+    //#endregion
 });

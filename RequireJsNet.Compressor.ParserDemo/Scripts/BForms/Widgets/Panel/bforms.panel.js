@@ -248,7 +248,7 @@
 
     bsPanel.prototype._initControls = function () {
 
-        if (this.options.editable) {
+        if (this.options.editable && this.options.isEditableBtnVisible) {
             this._toggleEditBtn(this._readonly ? true : false);
         }
 
@@ -355,6 +355,7 @@
                         this._cachedReadonlyContent = this.$content.html();
                     }
 
+                    this._trigger('onReadonlyLoadSuccess', 0, data);
                     this.showReadonly();
 
                     this._trigger('editSuccessHandler', 0, data);
@@ -431,6 +432,7 @@
         this._trigger('beforeEditableLoad', 0, data);
 
         this.$content.find(this.options.formSelector).addClass('loading');
+        this.$element.addClass('loading');
 
         return $.bforms.ajax({
             name: 'BsPanel|LoadEditable|' + this._name,
@@ -460,6 +462,9 @@
         this._toggleLoading();
         this._toggleCaret(true);
 
+        this.$element.removeClass('loading');
+
+
         this._trigger('onEditableLoadSuccess', 0, response);
 
         this.showEditable();
@@ -479,6 +484,8 @@
             }
 
             this._toggleLoading();
+
+            this.$element.removeClass('loading');
 
             this._showErrorMessage(data.Message, $errorContainer, true, '_loadEditableContent');
         }

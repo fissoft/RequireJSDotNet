@@ -263,7 +263,7 @@
             if (typeof this.$input !== "undefined") {
                 this.$input.on('focusout', $.proxy(function (e) {
 
-                    if (e.relatedTarget && $(e.relatedTarget).parents(this.$element).length == 0) {
+                    if (e.relatedTarget && this.$container.find($(e.relatedTarget)).length == 0) {
                         this.hide();
                     }
 
@@ -833,7 +833,21 @@
     bRangePicker.prototype.getEndValue = function () {
         return this._valueSettedForSecond !== false ? this.$endLabel.val() : this.options.placeholderValue;
     };
+    
+	bRangePicker.prototype.getRealStartValue = function () {
+        return this.$start.bsDatepicker('getValue');
+    };
 
+    bRangePicker.prototype.getRealEndValue = function () {
+        return this.$end.bsDatepicker('getValue');
+    };
+    
+    bRangePicker.prototype.clearRange = function (val) {
+        this.$start.bsDatepicker('clearValue');
+        this.$end.bsDatepicker('clearValue');
+        this.applyRange(val);
+    };
+    
     bRangePicker.prototype.resetRange = function (val) {
         this.$startLabel.data('value', this._startValue);
         this.$startLabel.val(this.$start.bsDatepicker('format', this._startValue));

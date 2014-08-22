@@ -327,7 +327,7 @@
             if (typeof this.$input !== "undefined") {
                 this.$input.on('focusout', $.proxy(function (e) {
 
-                    if (e.relatedTarget) {
+                    if (e.relatedTarget && this.$picker.find(e.relatedTarget).length == 0) {
                         this.hide();
                     }
 
@@ -592,7 +592,12 @@
 
             this._updateDisplays();
         } else {
-            this.resetValue();
+
+            if (this.options.allowDeselect) {
+                this._deselectValue();
+            } else {
+                this.resetValue();
+            }
         }
     };
 
@@ -1583,6 +1588,10 @@
     //#endregion
 
     //#region public methods
+    bDatepicker.prototype.reposition = function() {
+        this._positionPicker();
+    };
+
     bDatepicker.prototype.show = function (position) {
 
         if (this._visible !== true) {

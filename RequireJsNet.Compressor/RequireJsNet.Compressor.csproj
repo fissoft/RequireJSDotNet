@@ -35,8 +35,9 @@
     <Reference Include="EcmaScript.NET">
       <HintPath>..\packages\EcmaScript.Net.1.0.1.0\lib\net20\EcmaScript.NET.dll</HintPath>
     </Reference>
-    <Reference Include="Jint">
-      <HintPath>..\packages\Jint.2.1.0.0\lib\portable-net40+sl50+wp80+win\Jint.dll</HintPath>
+    <Reference Include="Jint, Version=2.1.0.0, Culture=neutral, PublicKeyToken=2e92ba9c8d81157f, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Jint.2.2.0\lib\portable-net40+sl50+win+wp80\Jint.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Build.Framework" />
     <Reference Include="Microsoft.Build.Utilities.v4.0" />
@@ -44,8 +45,9 @@
     <Reference Include="System.Core" />
     <Reference Include="System.XML" />
     <Reference Include="System.Xml.Linq" />
-    <Reference Include="Yahoo.Yui.Compressor">
-      <HintPath>..\packages\YUICompressor.NET.2.3.0.0\lib\NET20\Yahoo.Yui.Compressor.dll</HintPath>
+    <Reference Include="Yahoo.Yui.Compressor, Version=2.5.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\YUICompressor.NET.2.5.0.0\lib\NET20\Yahoo.Yui.Compressor.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -86,6 +88,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="json1.json" />
     <None Include="packages.config" />
     <None Include="README.md" />

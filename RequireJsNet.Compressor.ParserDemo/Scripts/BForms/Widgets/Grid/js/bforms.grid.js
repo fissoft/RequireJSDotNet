@@ -63,6 +63,7 @@
         pagerSelector: '.bs-pager',
         pagerGoTopTitle: 'Go top',
         pagerDataPageContainer: 'page',
+        goTopAfterPagination: true,
 
         detailsSelector: '.bs-expand',
         detailsUrl: null,
@@ -232,7 +233,7 @@
                             var question = "Are you sure?";
 
                             var confirmCssClass = "btn-primary bs-confirm";
-                            var cancelCssClass = "btn-default bs-cancel";
+                            var cancelCssClass = "btn-theme bs-cancel";
 
                             var confirmButtonText = "Yes";
                             var cancelButtonText = "No";
@@ -260,8 +261,10 @@
                                     text: confirmButtonText,
                                     cssClass: confirmCssClass,
                                     callback: $.proxy(function () {
-                                        $me.bsInlineQuestion('toggle');
-                                        opts.handler.call(this, this.element.find(this.options.rowSelector + '.selected'), this);
+                                        var preventClose = opts.handler.call(this, this.element.find(this.options.rowSelector + '.selected'), this);
+                                        if (preventClose !== false) {
+                                            $me.bsInlineQuestion('toggle');
+                                        }
                                     }, grid)
                                 },
                                {
@@ -421,9 +424,9 @@
             this.$rowsContainer.children().remove();
             this.$gridRowsHeader.closest('.row').show();
         }
-
+        
         this.$rowsContainer.prepend($row.find(this.options.rowSelector));
-
+        
         this.$pager.bsPager('updateTotal', this._currentResultsCount);
 
         this.toggleBulkActions();
@@ -431,6 +434,11 @@
 
         this.$rowsContainer.show();
         this.element.find(this.options.noResultsRowSelector).remove();
+
+        this._trigger('afterAdd', 0, {
+            row: row,
+            data: data
+        });
     };
 
     Grid.prototype.collapseAll = function () {
@@ -478,6 +486,30 @@
 
             this._addError(data.Message, $errorContainer);
         }
+    };
+
+    Grid.prototype.manualPager = function(data, pageChanged) {
+
+        this._trigger('beforeManualPager', 0, data);
+
+        //ajax
+        var ajaxOptions = {
+            name: this.options.uniqueName + '|pager',
+            url: this.options.pagerUrl,
+            data: data,
+            callbackData: {
+                sent: data,
+                pageChanged: pageChanged || false
+            },
+            context: this,
+            success: $.proxy(this._pagerAjaxSuccess, this),
+            error: $.proxy(this._pagerAjaxError, this),
+            loadingElement: this.$rowsContainer,
+            loadingDelay: 100,
+            loadingClass: 'loading'
+        };
+
+        $.bforms.ajax(ajaxOptions);
     };
     //#endregion
 
@@ -723,7 +755,7 @@
         this.refreshModel.Page = data.page;
         var pageChanged = true;
 
-        if (data.pageSize) {
+        if (data.pageSize && this.refreshModel.PageSize !== data.pageSize) {
             this.refreshModel.PageSize = data.pageSize;
             pageChanged = false;
         }
@@ -748,6 +780,7 @@
     Grid.prototype._evOnOrderChange = function (e) {
 
         e.preventDefault();
+   	    e.stopPropagation();
 
         if (!this._currentResultsCount) {
             return;
@@ -996,6 +1029,10 @@
         this._hideResetGridButton(true);
         this._removeErrors();
 
+        this._trigger('beforeReset', e, {
+            goToFirstPage: goToFirstPage
+        });
+
         if (this.refreshModel.PageSize != this._initialModel.PageSize) {
             goToFirstPage = true;
             this.refreshModel.PageSize = this._initialModel.PageSize;
@@ -1068,7 +1105,7 @@
     };
 
     Grid.prototype._onRowClick = function (e) {
-        if (!this._isInlineAction(e) && !this._isTextSelected()) {
+        if (!this._isInlineAction(e) && !this._isTextSelectedOrLink(e)) {
             var $row = $(e.currentTarget),
                 detailsClick = $(e.target).closest(this.options.rowDetailsSelector).length > 0,
                 errorClick = $(e.target).closest('.bs-form-error').length > 0;
@@ -1117,6 +1154,8 @@
     };
 
     Grid.prototype._pagerAjaxSuccess = function (data, callbackData) {
+
+        data.sendData = callbackData.sent;
 
         this._trigger('beforePaginationSuccess', 0, data);
 
@@ -1168,6 +1207,10 @@
 
         if (!this.options.expandByToggleSelector) {
             $(this.options.expandToggleSelector).hide();
+        }
+
+        if (this.options.goTopAfterPagination && callbackData.pageChanged == true) {
+            $.bforms.scrollToElement(this.element);
         }
     };
 
@@ -1368,8 +1411,16 @@
         return columnOrder;
     };
 
-    Grid.prototype._getRowElement = function (objId) {
-        return this.element.find(this.options.rowSelector + '[data-objid="' + objId + '"]');
+    Grid.prototype._getRowElement = function (objId, dataKey) {
+        var el = null;
+
+        if (dataKey) {
+            el = this.element.find(this.options.rowSelector + '[data-' + dataKey + '="' + objId + '"]');
+        }
+        if (el == null || el.length == 0) {
+            el = this.element.find(this.options.rowSelector + '[data-objid="' + objId + '"]');
+        }
+        return el;
     };
 
     Grid.prototype._initInitialDetails = function ($row) {
@@ -1398,14 +1449,15 @@
         }
     };
 
-    Grid.prototype._isTextSelected = function () {
+    Grid.prototype._isTextSelectedOrLink = function (e) {
         var text = "";
         if (typeof window.getSelection != "undefined") {
             text = window.getSelection().toString();
         } else if (typeof document.selection != "undefined" && document.selection.type == "Text") {
             text = document.selection.createRange().text;
         }
-        return text !== "";
+
+        return text !== "" || $(e.target).prop("tagName") == "A";
     };
 
     Grid.prototype._isInlineAction = function (e) {
@@ -1569,17 +1621,22 @@
         this._showResetGridButton();
     };
 
-    Grid.prototype.updateRows = function (html) {
+    Grid.prototype.setInitialCount = function (count) {
+        this._currentResultsCount = count;
+    };
+
+    Grid.prototype.updateRows = function (html, dataKey) {
 
         var $container = $(html);
         var $rows = $container.find(this.options.rowSelector);
+        var key = dataKey ? dataKey : 'objid';
 
         $rows.each($.proxy(function (idx, row) {
 
             var $row = $(row),
-            objId = $row.data('objid');
+            objId = $row.data(key) || $row.data('objid');
 
-            var $currentRow = this._getRowElement(objId);
+            var $currentRow = this._getRowElement(objId, dataKey);
 
             if (this.options.hasRowCheck) {
                 var checked = $currentRow.find(this.options.rowCheckSelector).prop('checked');

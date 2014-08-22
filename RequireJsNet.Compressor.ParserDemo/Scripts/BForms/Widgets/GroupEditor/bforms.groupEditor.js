@@ -16,6 +16,7 @@
 
     GroupEditor.prototype.options = {
         uniqueName: '',
+        enableQuickSearch: false,
 
         tabsSelector: '.bs-tabs',
         groupsSelector: '.bs-groups',
@@ -30,6 +31,21 @@
         tabItemsListSelector: '.bs-tabItemsList',
 
         groupBulkMoveSelector: '.bs-moveToGroupBtn',
+        groupBulkMoveMainSelector: '.bs-bulkGroupMove',
+        groupBulkMoveConfirmContent: 'Are you sure?',
+        groupBulkMoveConfirmShown: function(){
+        },
+        groupBulkMoveConfirm: false,
+        groupBulkMoveConfirmBtns: [{
+            text: 'Yes',
+            cssClass: 'btn-primary bs-confirm',
+            callback: function () {}
+        },
+        {
+            text: 'No',
+            cssClass: 'btn-theme bs-cancel',
+            callback: function (e) {}
+        }],
         groupEditorFormSelector: '.bs-groupForm',
         groupItemSelector: '.bs-groupItem',
         groupItemTemplateSelector: '.bs-itemTemplate',
@@ -41,6 +57,7 @@
 
         removeBtn: '.bs-removeBtn',
         addBtn: '.bs-addBtn',
+        selectedBtn: '.bs-selectedBtn',
         editBtn: '.bs-editBtn',
         upBtn: '.bs-upBtn',
         downBtn: '.bs-downBtn',
@@ -55,7 +72,7 @@
         errorMessageContainer: '.bs-errorMessage',
         errorMessageHolder: '.bs-errorMessageHolder',
         noResultsItemTabSelector: '.bs-noResultsTabItem',
-        
+
     };
     //#endregion
 
@@ -110,6 +127,7 @@
         this.$navbar.on('click', 'a', $.proxy(this._evChangeTab, this));
         this.$tabs.find('div[data-tabid]').on('click', 'button' + this.options.toolbarBtnSelector, $.proxy(this._evChangeToolbarForm, this));
         this.$tabs.on('click', this.options.addBtn, $.proxy(this._evAdd, this));
+        this.$tabs.on('click', this.options.selectedBtn, $.proxy(this._evPreventDefault, this));
         this.$groups.on('click', this.options.removeBtn, $.proxy(this._evRemove, this));
         this.$groups.on('click', this.options.editBtn, $.proxy(this._evEdit, this));
         this.$groups.on('click', this.options.upBtn, $.proxy(this._evUp, this));
@@ -117,7 +135,38 @@
         this.$groups.on('click', this.options.toggleExpandBtn, $.proxy(this._evToggleExpand, this));
         this.$element.on('click', this.options.resetBtn, $.proxy(this._evResetClick, this));
         this.$element.on('click', this.options.saveBtn, $.proxy(this._evSaveClick, this));
-        this.$tabs.on('click', this.options.groupBulkMoveSelector, $.proxy(this._evBulkMoveClick, this));
+
+        if (!this.options.groupBulkMoveConfirm) {
+            this.$tabs.on('click', this.options.groupBulkMoveSelector, $.proxy(this._evBulkMoveClick, this));
+        } else {
+            this.groupBulkInlineQuestion = this.$tabs.find(this.options.groupBulkMoveMainSelector).bsInlineQuestion({
+                container: 'body',
+                toggle: 'popover',
+                placement: 'top',
+                content: this.options.groupBulkMoveConfirmContent,
+                buttons: this.options.groupBulkMoveConfirmBtns,
+                shown: this.options.groupBulkMoveConfirmShown,
+                popoverOptions: {
+                    trigger: 'manual'
+                }
+            });
+
+            this.$tabs.on('click', this.options.groupBulkMoveSelector, $.proxy(function (e) {
+                var $el = $(e.currentTarget),
+                    targetGroupId = $el.data('groupid');
+
+                var $inlineParent = $el.parents(this.options.groupBulkMoveMainSelector + ":first");
+
+                $inlineParent.bsInlineQuestion('option', 'additionalData', {
+                    groupId: targetGroupId,
+                    groupEditor: this
+                });
+
+                $inlineParent.bsInlineQuestion('show');
+
+                e.preventDefault();
+            }, this));
+        }
     };
 
     GroupEditor.prototype._initSelectedTab = function () {
@@ -190,8 +239,12 @@
 
                 }, this));
 
-                tabModel.container.on('change', this.options.tabInlineSearch, $.proxy(this._evInlineSearch, this, tabModel));
+                if (this.options.enableQuickSearch) {
+                    tabModel.container.on('keyup', this.options.tabInlineSearch, $.proxy(this._evInlineSearch, this, tabModel));
 
+                } else {
+                    tabModel.container.on('change', this.options.tabInlineSearch, $.proxy(this._evInlineSearch, this, tabModel));
+                }
             }
 
             tabModel.container.data('init', true);
@@ -208,7 +261,8 @@
             connectWith: this.options.groupSelector,
             start: $.proxy(this._sortStart, this),
             beforeStop: $.proxy(this._beforeSortStop, this),
-            stop: $.proxy(this._sortStop, this)
+            stop: $.proxy(this._sortStop, this),
+            cancel: '.bs-notDraggable'
         });
     };
 
@@ -344,9 +398,7 @@
         }
     };
 
-    GroupEditor.prototype._evBulkMoveClick = function (e) {
-
-        var targetGroupId = $(e.currentTarget).data('groupid');
+    GroupEditor.prototype.bulkMoveToGroup = function (groupId, additionalData) {
 
         var currentTab = this._getSelectedTab(),
             $movableItems = currentTab.container.find(this.options.tabItemSelector),
@@ -360,13 +412,22 @@
                 objId: $tabItem.data('objid'),
                 itemModel: $tabItem.data('model'),
                 tabId: currentTab.tabId
-            }, targetGroupId, true) || hasMoved;
+            }, groupId, true, additionalData) || hasMoved;
 
         }, this));
 
         if (!hasMoved) {
             this._showMoveError(this.$element);
         }
+
+    };
+
+    GroupEditor.prototype._evBulkMoveClick = function (e) {
+
+        var $el = $(e.currentTarget),
+            targetGroupId = $el.data('groupid');
+
+        this.bulkMoveToGroup(targetGroupId);
 
         e.preventDefault();
     };
@@ -725,7 +786,9 @@
 
     GroupEditor.prototype._toggleItemCheck = function ($item, forceUncheck) {
         var $glyph = $item.find('span.glyphicon'),
-            addBtn = this.options.addBtn.replace(".", "");
+            $glyphContainer = $glyph.parents('a:first'),
+            addBtn = this.options.addBtn.replace(".", ""),
+            selectedBtn = this.options.selectedBtn.replace(".", "");
 
         if (forceUncheck && !$item.hasClass('selected')) {
             return false;
@@ -736,14 +799,23 @@
         }
 
         $item.toggleClass('selected');
-        $glyph.parents('a:first').toggleClass(addBtn);
+        $glyphContainer.toggleClass(addBtn);
+        $glyphContainer.toggleClass(selectedBtn);
 
         if ($glyph.hasClass('glyphicon-ok')) {
             $glyph.removeClass('glyphicon-ok')
                 .addClass('glyphicon-plus');
+
+            if ($glyphContainer.hasClass('disabled')) {
+                $glyphContainer.hide();
+            }
         } else {
             $glyph.removeClass('glyphicon-plus')
                 .addClass('glyphicon-ok');
+
+            if ($glyphContainer.hasClass('disabled')) {
+                $glyphContainer.show();
+            }
         }
 
         this._trigger('afterToggleItem', 0, arguments);
@@ -885,7 +957,7 @@
             },
             start: $.proxy(this._dragStart, this),
             stop: $.proxy(this._dragStop, this),
-            cancel: '.selected'
+            cancel: '.selected, .bs-notDraggable'
         };
     };
 
@@ -973,6 +1045,11 @@
             isConnectable = connectsWith.indexOf(groupId) !== -1,
             allowMove = isConnectable && !isInGroup;
 
+
+        //cleanup
+        $item.removeData('groupid')
+             .removeClass('temp-sortable');
+
         if (this._dragging !== true) {
 
             //inner group sorting or moving from one group to another
@@ -983,9 +1060,6 @@
 
         }
 
-        //cleanup
-        $item.removeData('groupid')
-             .removeClass('temp-sortable');
 
         if (typeof this.options.validateMove === "function") {
             var validateResult = this.options.validateMove(model, tabId, $group);
@@ -1067,6 +1141,10 @@
     GroupEditor.prototype._removeOpacity = function () {
         var $groups = this.$element.find(this.options.groupSelector);
         $groups.css('opacity', '1');
+    };
+
+    GroupEditor.prototype._evPreventDefault = function (e) {
+        e.preventDefault();
     };
     //#endregion
 
@@ -1275,7 +1353,7 @@
      * @param data json containing objId, itemModel, tabId
      * @param groupId destination group
      */
-    GroupEditor.prototype.addToGroup = function (data, groupId, preventAnimation) {
+    GroupEditor.prototype.addToGroup = function (data, groupId, preventAnimation, additionalData) {
 
         var $group = this._getGroup(groupId),
             objId = data.objId,
@@ -1309,6 +1387,14 @@
             this._initGroupItemForm($template.find(this.options.editorFormSelector));
 
             $group.find(this.options.groupItemsWrapper).append($template);
+
+            this._trigger('onTabItemAdd', 0, {
+                model: model,
+                tabId: tabId,
+                $row: $template,
+                $group: $group,
+                additionalData: additionalData
+            });
 
             if ($tabItem.length) {
 
@@ -1371,7 +1457,7 @@
     //#endregion
 
     //#region Validation
-    GroupEditor.prototype.valid = function() {
+    GroupEditor.prototype.valid = function () {
 
         var isValid = true;
 
@@ -1384,7 +1470,7 @@
         return isValid;
     };
 
-    GroupEditor.prototype.validateUnobtrusive = function() {
+    GroupEditor.prototype.validateUnobtrusive = function () {
         var isValid = true;
 
         for (var key in this.options.validation) {
@@ -1433,8 +1519,8 @@
         this.$element.find(this.options.errorMessageContainer).remove();
     };
 
-    GroupEditor.prototype._createErrorContainer = function(message) {
-        var $error = $("<div></div>").addClass("alert alert-danger").addClass(this.options.errorMessageContainer.replace('.',''));
+    GroupEditor.prototype._createErrorContainer = function (message) {
+        var $error = $("<div></div>").addClass("alert alert-danger").addClass(this.options.errorMessageContainer.replace('.', ''));
 
         var $closeBtn = $("<button></button>").addClass("close").attr('data-dismiss', 'alert').prop('type', 'button').text('×');
 
@@ -1455,7 +1541,7 @@
 
         var isValid = itemsCount > 0;
 
-        if(!isValid && showError === true) {
+        if (!isValid && showError === true) {
             if (typeof this["_showError_" + rule] === "function") {
                 this["_showError_" + rule].apply(this, [this.options.validation[rule].message]);
             } else {
@@ -1466,7 +1552,7 @@
         return isValid;
     };
 
-    GroupEditor.prototype.addValidationRule = function(rule, validationFunc, errorFunc) {
+    GroupEditor.prototype.addValidationRule = function (rule, validationFunc, errorFunc) {
 
         if (typeof validationFunc === "function") {
             this["_validate_" + rule] = validationFunc;

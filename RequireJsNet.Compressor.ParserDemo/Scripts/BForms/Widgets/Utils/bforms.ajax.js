@@ -103,17 +103,19 @@
         }
     };
 
-    AjaxWrapper.prototype._getQueryStringObject = function () {
+    AjaxWrapper.prototype._getQueryStringObject = function() {
         var pairs = location.search.slice(1).split('&');
-
         var result = {};
-        pairs.forEach(function (pair) {
-            pair = pair.split('=');
-            result[pair[0]] = decodeURIComponent(pair[1] || '');
+
+        pairs.forEach(function(pair) {
+            if (pair) {
+                pair = pair.split('=');
+                result[pair[0]] = decodeURIComponent(pair[1] || '');
+            }
         });
 
         return JSON.parse(JSON.stringify(result));
-    }
+    };
     //#endregion
 
     //#region public methods
@@ -133,7 +135,7 @@
         var xhrSettings = $.extend({}, this.getDefaultOptions(), opts),
             jqXHR = null;
 
-        if (this.getDefaultOptions().parseQueryString === true) {
+        if (opts.parseQueryString === true) {
             $.extend(true, xhrSettings.data, this._getQueryStringObject());
         }
 
@@ -264,7 +266,7 @@
 
                     try {
 
-                        if (typeof jqXHR.responseText !== "undefined") {
+                        if (typeof jqXHR.responseText !== "undefined" && jqXHR.responseText != '') {
 
                             var response = JSON.parse(jqXHR.responseText);
 
@@ -326,12 +328,28 @@
             var stackedXhr = this._xhrStack[xhrRequest.name];
 
             if (xhrRequest.readyState === 4 && stackedXhr.aborted !== true) {
-                var response = JSON.parse(xhrRequest.responseText);
-                if (response.Status == self._statusEnum.Success || response.Status == self._statusEnum.ValidationError) {
-                    deferredXHR.resolve(response.Status, [response, opts.callbackData]);
-                } else {
-                    deferredXHR.reject(response.Status, [response != null ? null : response.Data, jqXHR, textStatus, errorThrown, opts.callbackData]);
+
+                var isValidJson = false;
+
+                try {
+                    var response = JSON.parse(xhrRequest.responseText);
+                    isValidJson = true;
+                } catch (ex) {
+                    deferredXHR.reject(self._statusEnum.ServerError, [response != null ? response.Data : null, xhrRequest, xhrRequest.statusText, null, opts.callbackData]);
                 }
+
+                if (isValidJson) {
+                    try {
+                        if (response.Status == self._statusEnum.Success || response.Status == self._statusEnum.ValidationError) {
+                            deferredXHR.resolve(response.Status, [response, opts.callbackData]);
+                        } else {
+                            deferredXHR.reject(response.Status, [response != null ? response.Data : null, xhrRequest, xhrRequest.statusText, null, opts.callbackData]);
+                        }
+                    } catch (ex) {
+                        window.console.log(ex.stack);
+                    }
+                }
+
 
                 self._toggleLoading(opts.name, false);
             }

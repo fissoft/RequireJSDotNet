@@ -34,22 +34,24 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="BForms">
-      <HintPath>..\packages\BForms.MVC.1.0.0.34\lib\net45\BForms.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="BForms, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\BForms.MVC.1.0.0.51\lib\net45\BForms.dll</HintPath>
     </Reference>
     <Reference Include="DocumentFormat.OpenXml">
       <HintPath>..\packages\DocumentFormat.OpenXml.2.5\lib\DocumentFormat.OpenXml.dll</HintPath>
     </Reference>
-    <Reference Include="Jint">
-      <HintPath>..\packages\Jint.2.1.0.0\lib\portable-net40+sl50+wp80+win\Jint.dll</HintPath>
+    <Reference Include="Jint, Version=2.1.0.0, Culture=neutral, PublicKeyToken=2e92ba9c8d81157f, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Jint.2.2.0\lib\portable-net40+sl50+win+wp80\Jint.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Web.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>..\packages\Newtonsoft.Json.5.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.6.0.4\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
-    <Reference Include="RequireJsNet">
-      <HintPath>..\packages\RequireJsNet.1.0.7.0\lib\net45\RequireJsNet.dll</HintPath>
+    <Reference Include="RequireJsNet, Version=1.0.27.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\RequireJsNet.1.0.27.0\lib\net45\RequireJsNet.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -76,15 +78,19 @@
     <None Include="Scripts\BForms\Plugins\Rangepicker\css\bforms.rangepicker.scss" />
     <None Include="Scripts\BForms\RequireJS.config" />
     <None Include="Scripts\BForms\RequireJS.Release.config" />
+    <None Include="Scripts\BForms\Stylesheets\bforms.controlpanel.scss" />
     <None Include="Scripts\BForms\Stylesheets\bforms.core.scss" />
+    <None Include="Scripts\BForms\Stylesheets\bforms.formbuilder.scss" />
     <None Include="Scripts\BForms\Stylesheets\bforms.grid.scss" />
     <None Include="Scripts\BForms\Stylesheets\bforms.groupeditor.scss" />
+    <None Include="Scripts\BForms\Stylesheets\bforms.helpers.scss" />
     <None Include="Scripts\BForms\Stylesheets\bforms.pager.scss" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Scripts\BForms\Bundles\css\stylesheets.css" />
     <Content Include="Scripts\BForms\Bundles\fonts\glyphicons-halflings-regular.svg" />
     <Content Include="Scripts\BForms\Bundles\images\bg-user.png" />
+    <Content Include="Scripts\BForms\Bundles\images\chosen-sprite.png" />
     <Content Include="Scripts\BForms\Bundles\images\edit-pencil.gif" />
     <Content Include="Scripts\BForms\Bundles\images\grippy.png" />
     <Content Include="Scripts\BForms\Bundles\images\icn-arr-down.png" />
@@ -135,6 +141,7 @@
     <Content Include="Scripts\BForms\Components\SelectorSet\jquery.selector-set.js" />
     <Content Include="Scripts\BForms\Components\SelectorSet\selector-set.js" />
     <Content Include="Scripts\BForms\Images\bg-user.png" />
+    <Content Include="Scripts\BForms\Images\chosen-sprite.png" />
     <Content Include="Scripts\BForms\Images\icn-down_arrow-small.png" />
     <Content Include="Scripts\BForms\Images\icn-grippy.png" />
     <Content Include="Scripts\BForms\Images\icn-order_down.png" />
@@ -182,12 +189,20 @@
     <Content Include="Scripts\BForms\Plugins\Validation\bforms.validate.js" />
     <Content Include="Scripts\BForms\Plugins\Validation\bforms.validate.unobtrusive.js" />
     <Content Include="Scripts\BForms\Plugins\Validation\i18n\bforms.validate-ro.js" />
+    <Content Include="Scripts\BForms\Stylesheets\bforms.controlpanel.css" />
     <Content Include="Scripts\BForms\Stylesheets\bforms.core.css" />
+    <Content Include="Scripts\BForms\Stylesheets\bforms.formbuilder.css" />
     <Content Include="Scripts\BForms\Stylesheets\bforms.grid.css" />
     <Content Include="Scripts\BForms\Stylesheets\bforms.groupeditor.css" />
     <Content Include="Scripts\BForms\Stylesheets\bforms.groupeditor.min.css" />
+    <Content Include="Scripts\BForms\Stylesheets\bforms.helpers.css" />
     <Content Include="Scripts\BForms\Stylesheets\bforms.pager.css" />
+    <Content Include="Scripts\BForms\Widgets\ControlPanel\bforms.controlPanel.js" />
     <Content Include="Scripts\BForms\Widgets\FileUpload\bforms.fileUpload.js" />
+    <Content Include="Scripts\BForms\Widgets\FormBuilder\bforms.formBuilder.formRenderer.js" />
+    <Content Include="Scripts\BForms\Widgets\FormBuilder\bforms.formBuilder.js" />
+    <Content Include="Scripts\BForms\Widgets\FormBuilder\bforms.formBuilder.models.js" />
+    <Content Include="Scripts\BForms\Widgets\FormBuilder\bforms.formBuilder.templates.js" />
     <Content Include="Scripts\BForms\Widgets\Grid\js\bforms.editable.js" />
     <Content Include="Scripts\BForms\Widgets\Grid\js\bforms.form.js" />
     <Content Include="Scripts\BForms\Widgets\Grid\js\bforms.grid.js" />
