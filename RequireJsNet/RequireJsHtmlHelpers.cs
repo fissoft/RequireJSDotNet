@@ -209,9 +209,10 @@ namespace RequireJS
 
             var requireRootBuilder = new JavaScriptBuilder(); 
             var requireEntryPointBuilder = new JavaScriptBuilder();
+            requireRootBuilder.AddAttributesToStatement("src", requireUrl);
             if (ViewDataRequireJsAllowKey != entryPointPath.ToHtmlString())
             {
-                requireRootBuilder.AddAttributesToStatement("src", requireUrl);
+                
                 requireEntryPointBuilder.AddStatement(
                     JavaScriptHelpers.MethodCall(
                         "require",
@@ -224,7 +225,8 @@ namespace RequireJS
                         , requireEntryPointBuilder.Render()));
             }
             return new MvcHtmlString(
-                string.Join("",configBuilder.Render()));
+                string.Join("", configBuilder.Render(), Environment.NewLine
+                        , requireRootBuilder.Render()));
         }
 
         /// <summary>
