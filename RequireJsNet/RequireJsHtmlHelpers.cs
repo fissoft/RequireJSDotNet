@@ -322,7 +322,7 @@ namespace RequireJS
                 var computedEntry = GetEntryPoint(server, filePath, root);
                 return new MvcHtmlString(withBaseUrl ? computedEntry : string.Format("{0}{1}.js", rootUrl, computedEntry));
             }
-            if (html.ViewData[ViewDataRequireJsAllowKey].Equals("true"))
+            if ("true".Equals(html.ViewData[ViewDataRequireJsAllowKey]))
             {
                 return new MvcHtmlString(ViewDataRequireJsAllowKey);
             }
