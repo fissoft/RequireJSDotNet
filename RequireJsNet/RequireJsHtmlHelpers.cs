@@ -31,6 +31,7 @@ namespace RequireJS
         private const string DefaultArea = "Common";
         private const string ViewDataControllerKey = "RequireJsController";
         private const string ViewDataActionKey = "RequireJsAction";
+        private const string ViewDataRequireJsAllowKey = "RequireJsAlwaysAllowed";
 
         #endregion
 
@@ -206,15 +207,16 @@ namespace RequireJS
             configBuilder.AddStatement(JavaScriptHelpers.SerializeAsVariable(options, "requireConfig"));
             configBuilder.AddStatement(JavaScriptHelpers.SerializeAsVariable(outputConfig, "require"));
 
-            var requireRootBuilder = new JavaScriptBuilder();
-            requireRootBuilder.AddAttributesToStatement("src", requireUrl);
-
+            var requireRootBuilder = new JavaScriptBuilder(); 
             var requireEntryPointBuilder = new JavaScriptBuilder();
-            requireEntryPointBuilder.AddStatement(
-                JavaScriptHelpers.MethodCall(
-                "require", 
-                (object)new[] { entryPointPath.ToString() }));
-
+            if (ViewDataRequireJsAllowKey != entryPointPath.ToHtmlString())
+            {
+                requireRootBuilder.AddAttributesToStatement("src", requireUrl);
+                requireEntryPointBuilder.AddStatement(
+                    JavaScriptHelpers.MethodCall(
+                        "require",
+                        (object) new[] {entryPointPath.ToString()}));
+            }
             return new MvcHtmlString(
                 string.Join("",configBuilder.Render() 
                 , Environment.NewLine
@@ -237,10 +239,10 @@ namespace RequireJS
         /// </returns>
         public static MvcHtmlString RequireJsEntryPoint(this HtmlHelper html, string root)
         {
-            var routingInfo = html.GetRoutingInfo();
+           
             var rootUrl = string.Empty;
             var withBaseUrl = true;
-            var server = html.ViewContext.HttpContext.Server;
+          
 
             if (root != DefaultEntryPointRoot)
             {
@@ -248,6 +250,8 @@ namespace RequireJS
                 rootUrl = UrlHelper.GenerateContentUrl(root, html.ViewContext.HttpContext);
             }
             string entryPointTmpl, entryPoint, filePath;
+            var server = html.ViewContext.HttpContext.Server;
+            var routingInfo = html.GetRoutingInfo();
             //对于用户自行指定
             if (html.ViewData.ContainsKey(ViewDataControllerKey) || html.ViewData.ContainsKey(ViewDataActionKey))
             {
@@ -315,8 +319,11 @@ namespace RequireJS
             {
                 var computedEntry = GetEntryPoint(server, filePath, root);
                 return new MvcHtmlString(withBaseUrl ? computedEntry : string.Format("{0}{1}.js", rootUrl, computedEntry));
-            } 
-
+            }
+            if (html.ViewData[ViewDataRequireJsAllowKey].Equals("true"))
+            {
+                return new MvcHtmlString(ViewDataRequireJsAllowKey);
+            }
             return null;
         }
 
