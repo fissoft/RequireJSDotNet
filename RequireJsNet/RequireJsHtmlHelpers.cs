@@ -216,13 +216,15 @@ namespace RequireJS
                     JavaScriptHelpers.MethodCall(
                         "require",
                         (object) new[] {entryPointPath.ToString()}));
+                return new MvcHtmlString(
+                    string.Join("", configBuilder.Render()
+                        , Environment.NewLine
+                        , requireRootBuilder.Render()
+                        , Environment.NewLine
+                        , requireEntryPointBuilder.Render()));
             }
             return new MvcHtmlString(
-                string.Join("",configBuilder.Render() 
-                , Environment.NewLine
-                , requireRootBuilder.Render() 
-                , Environment.NewLine
-                , requireEntryPointBuilder.Render()));
+                string.Join("",configBuilder.Render()));
         }
 
         /// <summary>
